@@ -1,7 +1,7 @@
 #include "../include/Plateau.hpp"
 
 Plateau::Plateau(int nombreJoueurs, const std::vector<std::string>& nomsJoueurs)
-    : nbJoueurs(nombreJoueurs), joueurs(nomsJoueurs)
+    : nbJoueurs(nombreJoueurs)
 {
     if (nbJoueurs < 2 || nbJoueurs > 9) {
         throw std::invalid_argument("Le nombre de joueurs doit être compris entre 2 et 9.");
