@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include "Common.hpp"
+#include "Tuile.hpp"
 
 class Plateau {
 private:
@@ -20,6 +21,10 @@ public:
 
     int getTailleGrille() const;
     int getNbJoueurs() const;
+
+    bool estPositionValide(const Coordonnee& pos) const;
+    bool placerTuile(const Tuile& tuile, const Coordonnee& pos, int idJoueur);
+
 };
 
 #endif 

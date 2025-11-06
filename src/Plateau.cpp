@@ -21,5 +21,28 @@ void Plateau::afficherGrille() const {
     }
 }
 
+bool Plateau::estPositionValide(const Coordonnee& pos) const {
+    return pos.ligne >= 0 && pos.ligne < tailleGrille &&
+           pos.col >= 0 && pos.col < tailleGrille;
+}
+
+bool Plateau::placerTuile(const Tuile& tuile, const Coordonnee& pos, int idJoueur) {
+    for (const auto& bloc : tuile.getForme()) {
+        int x = pos.ligne + bloc.ligne;
+        int y = pos.col + bloc.col;
+        if (!estPositionValide({x, y}) || grille[x][y] != '.')
+            return false;
+    }
+
+    for (const auto& bloc : tuile.getForme()) {
+        int x = pos.ligne + bloc.ligne;
+        int y = pos.col + bloc.col;
+        grille[x][y] = '0' + idJoueur;
+    }
+
+    return true;
+}
+
+
 int Plateau::getTailleGrille() const { return tailleGrille; }
 int Plateau::getNbJoueurs() const { return nbJoueurs; }
