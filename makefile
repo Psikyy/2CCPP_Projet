@@ -4,7 +4,7 @@ SRC_DIR = src
 INC_DIR = include
 OBJ_DIR = obj
 
-SRC = $(SRC_DIR)/main.cpp $(SRC_DIR)/Plateau.cpp
+SRC = $(wildcard src/*.cpp)
 
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
