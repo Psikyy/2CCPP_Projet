@@ -5,11 +5,13 @@
 #include "Joueur.hpp"
 #include "Plateau.hpp"
 #include "Tuile.hpp"
+#include "tuilesDef.hpp" // 🔥 Ajouté
 
 class Jeu {
 private:
     Plateau plateau;
     std::vector<Joueur> joueurs;
+    std::vector<Tuile> tuilesDisponibles;
     int joueurActuel;
 
 public:
@@ -20,3 +22,4 @@ public:
 };
 
 #endif
+
