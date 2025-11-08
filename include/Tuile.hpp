@@ -9,10 +9,8 @@ class Tuile {
 public:
     Tuile() = default;
     Tuile(const std::vector<Coordonnee>& formeInitiale);
-
     void rotate();
     void flip();
-
     const std::vector<Coordonnee>& getForme() const;
     void afficherApercu() const;
 
@@ -21,4 +19,4 @@ private:
     void normaliser();
 };
 
-#endif 
+#endif

@@ -12,6 +12,7 @@ private:
     int nbJoueurs;
     int tailleGrille;
     std::vector<std::vector<char>> grille;
+    std::string couleurCase(char c) const;
 
 public:
     Plateau(int nombreJoueurs, const std::vector<std::string>& nomsJoueurs);
@@ -23,10 +24,7 @@ public:
 
     bool estPositionValide(const Coordonnee& pos) const;
     bool placerTuile(const Tuile& tuile, const Coordonnee& pos, int idJoueur);
-
-    bool toucheTerritoireParCote(int idJoueur, const Tuile& tuile, const Coordonnee& pos) const;
-
-    bool empieteSurAutre(int idJoueur, const Tuile& tuile, const Coordonnee& pos) const;
 };
 
 #endif
+
