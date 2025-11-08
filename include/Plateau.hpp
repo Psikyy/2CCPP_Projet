@@ -9,12 +9,11 @@
 
 class Plateau {
 private:
-    int nbJoueurs;                               
-    int tailleGrille;                            
-    std::vector<std::vector<char>> grille;               
+    int nbJoueurs;
+    int tailleGrille;
+    std::vector<std::vector<char>> grille;
 
 public:
-
     Plateau(int nombreJoueurs, const std::vector<std::string>& nomsJoueurs);
 
     void afficherGrille() const;
@@ -25,6 +24,9 @@ public:
     bool estPositionValide(const Coordonnee& pos) const;
     bool placerTuile(const Tuile& tuile, const Coordonnee& pos, int idJoueur);
 
+    bool toucheTerritoireParCote(int idJoueur, const Tuile& tuile, const Coordonnee& pos) const;
+
+    bool empieteSurAutre(int idJoueur, const Tuile& tuile, const Coordonnee& pos) const;
 };
 
-#endif 
+#endif

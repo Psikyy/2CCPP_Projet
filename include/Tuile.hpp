@@ -7,6 +7,7 @@
 
 class Tuile {
 public:
+    Tuile() = default;
     Tuile(const std::vector<Coordonnee>& formeInitiale);
 
     void rotate();
@@ -20,4 +21,4 @@ private:
     void normaliser();
 };
 
-#endif // TUILE_HPP
+#endif 
