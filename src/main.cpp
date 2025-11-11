@@ -1,81 +1,36 @@
-#include "../include/Jeu.hpp"
 #include <iostream>
+#include <vector>
+#include "../include/Jeu.hpp"
 
 int main() {
-    std::vector<std::string> noms = {"Arthur", "Lucas"};
-    Jeu jeu(noms, 5); // 5 tours automatiques par joueur (modifiable)
+    try {
+        std::cout << "=== Laying Grass — mode console ===\n\n";
 
-    Plateau &plateau = jeu.getPlateau();
-    auto &pile = jeu.getPile();
-    auto &joueurs = jeu.getJoueurs();
-
-    std::cout << "\n=== TEST AUTOMATIQUE DEMARRE ===\n";
-
-    // --- Placement initial (central) ---
-    plateau.placerTuile(Tuile({{0,0}}), {10,10}, 1);
-    plateau.placerTuile(Tuile({{0,0}}), {10,12}, 2);
-
-    // --- Simulation des tours ---
-    for (int tour = 1; tour <= jeu.getNbTours(); ++tour) {
-        std::cout << "\n--- TOUR " << tour << " ---\n";
-
-        for (int pid = 1; pid <= (int)joueurs.size(); ++pid) {
-            Joueur &j = joueurs[pid-1];
-            if (pile.empty()) break;
-
-            Tuile t = pile.front();
-            pile.pop_front();
-
-            // Test rotation et flip
-            if (tour % 2 == 0) t.rotate();
-            if (tour % 3 == 0) t.flip();
-
-            // Essai placements autour du territoire du joueur
-            bool placed = false;
-            for (int r = 8; r < 13 && !placed; r++) {
-                for (int c = 8; c < 15 && !placed; c++) {
-                    if (plateau.placerTuile(t, {r,c}, pid)) {
-                        std::cout << j.getNom() << " place une tuile en " 
-                                  << char('A'+c) << (r+1) << "\n";
-                        placed = true;
-                    }
-                }
-            }
-
-            // Si aucun placement possible → passe le tour
-            if (!placed) {
-                std::cout << j.getNom() << " ne peut pas jouer → tuile défaussée.\n";
-            }
+        int nbJoueurs = 2;
+        std::cout << "Combien de joueurs ? (2-9) [default 2]: ";
+        std::string s;
+        std::getline(std::cin, s);
+        if (!s.empty()) {
+            try {
+                int v = std::stoi(s);
+                if (v >= 2 && v <= 9) nbJoueurs = v;
+            } catch(...) {}
         }
 
-        plateau.afficherGrille();
+        std::vector<std::string> noms;
+        for (int i = 0; i < nbJoueurs; ++i) {
+            std::string nom;
+            std::cout << "Nom du joueur " << (i+1) << " : ";
+            std::getline(std::cin, nom);
+            if (nom.empty()) nom = std::string("J") + std::to_string(i+1);
+            noms.push_back(nom);
+        }
+
+        Jeu jeu(noms, 9);
+        jeu.bouclePrincipale();
+    } catch (const std::exception& e) {
+        std::cerr << "Erreur : " << e.what() << std::endl;
+        return 1;
     }
-
-    // --- Fin de Partie / Calcul Score ---
-    std::cout << "\n===== FIN DU TEST AUTOMATIQUE =====\n";
-    plateau.afficherGrille();
-    std::cout << "\nCalcul des scores...\n";
-
-    int nb = joueurs.size();
-    std::vector<int> bestSquares(nb+1), totalCases(nb+1);
-
-    for (int i = 1; i <= nb; i++) {
-        bestSquares[i] = plateau.plusGrandCarrePour(i);
-        totalCases[i] = plateau.nombreCasesPour(i);
-        std::cout << joueurs[i-1].getNom()
-                  << ": plus grand carre = " << bestSquares[i]
-                  << " => " << (bestSquares[i] * bestSquares[i]) << " cases, total = "
-                  << totalCases[i] << "\n";
-    }
-
-    int winner = 1;
-    for (int i = 2; i <= nb; i++) {
-        if (bestSquares[i] > bestSquares[winner]) winner = i;
-        else if (bestSquares[i] == bestSquares[winner] && totalCases[i] > totalCases[winner])
-            winner = i;
-    }
-
-    std::cout << "\n🏆 Vainqueur automatique : " << joueurs[winner-1].getNom() << " !\n";
-
     return 0;
 }
