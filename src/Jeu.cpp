@@ -6,169 +6,173 @@
 #include <limits>
 
 Jeu::Jeu(const std::vector<std::string>& noms, int tours)
-    : plateau((int)noms.size(), noms), indexPile(0), toursParJoueur(tours)
+    : plateau((int)noms.size(), noms), toursParJoueur(tours)
 {
-    for (int i = 0; i < (int)noms.size(); ++i) {
-        std::string couleur = "color"; 
-        joueurs.emplace_back(noms[i], couleur, i + 1);
-    }
-
+    for (int i = 0; i < (int)noms.size(); ++i)
+        joueurs.emplace_back(noms[i], "color", i + 1);
     initialiserTuiles();
 }
 
 void Jeu::initialiserTuiles() {
-    pileTuiles = chargerTuiles();
+    std::vector<Tuile> tmp = chargerTuiles();
     std::random_device rd;
     std::mt19937 g(rd());
-    std::shuffle(pileTuiles.begin(), pileTuiles.end(), g);
-    indexPile = 0;
+    std::shuffle(tmp.begin(), tmp.end(), g);
+    pileTuiles.clear();
+    for (auto &t : tmp) pileTuiles.push_back(t);
 }
 
 Tuile Jeu::tirerPremiere() {
-    if (indexPile >= pileTuiles.size()) {
-        return Tuile();
-    }
-    Tuile t = pileTuiles[indexPile];
-    pileTuiles.erase(pileTuiles.begin() + indexPile);
+    if (pileTuiles.empty()) return Tuile();
+    Tuile t = pileTuiles.front();
+    pileTuiles.pop_front();
     return t;
 }
 
 bool Jeu::choisirParmiSuivantes(int choixRelatif, Tuile& sortie) {
-    if (indexPile + choixRelatif >= (int)pileTuiles.size()) return false;
-    size_t chosenIdx = indexPile + choixRelatif;
-    sortie = pileTuiles[chosenIdx];
-
-    std::vector<Tuile> prefix;
-    for (size_t i = indexPile; i < chosenIdx; ++i) prefix.push_back(pileTuiles[i]);
-
-    
-    pileTuiles.erase(pileTuiles.begin() + indexPile, pileTuiles.begin() + chosenIdx + 1);
-
-    for (auto& t : prefix) pileTuiles.push_back(t);
-
+    if (choixRelatif < 0) return false;
+    if ((size_t)choixRelatif >= pileTuiles.size()) return false;
+    for (int i = 0; i < choixRelatif; ++i) {
+        Tuile tmp = pileTuiles.front();
+        pileTuiles.pop_front();
+        pileTuiles.push_back(tmp);
+    }
+    sortie = pileTuiles.front();
+    pileTuiles.pop_front();
     return true;
 }
 
-void Jeu::afficherOptionsTuiles(size_t start, int count) {
-    std::cout << "Tuiles disponibles (indices relatifs) :\n";
-    for (int i = 0; i < count; ++i) {
-        size_t idx = start + i;
-        if (idx >= pileTuiles.size()) break;
-        std::cout << i+1 << ") Aperçu tuile #" << idx+1 << " :\n";
-        pileTuiles[idx].afficherApercu();
-        std::cout << '\n';
+void Jeu::afficherOptionsTuiles(int count) {
+    int displayed = 0;
+    for (auto it = pileTuiles.begin(); it != pileTuiles.end() && displayed < count; ++it, ++displayed) {
+        std::cout << "Option " << (displayed+1) << " :\n";
+        it->afficherApercu();
     }
 }
 
 void Jeu::bouclePrincipale() {
     int nbJoueurs = (int)joueurs.size();
-
-    std::cout << "Placement des tuiles de départ (1x1) pour chaque joueur.\n";
     for (int pid = 1; pid <= nbJoueurs; ++pid) {
         plateau.afficherGrille();
-        std::cout << "Joueur " << joueurs[pid-1].getNom() << " (ID " << pid << "), place ta tuile de départ (1x1).\n";
+        std::cout << joueurs[pid-1].getNom() << ", place ta tuile de depart (1x1)\n";
         int l, c;
         while (true) {
-            std::cout << "Entrez ligne et colonne (ex: 5 5) : ";
+            std::cout << "ligne colonne : ";
             if (!(std::cin >> l >> c)) {
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                 continue;
             }
-            Tuile tuileDepart({{0,0}});
-            if (plateau.placerTuile(tuileDepart, {l,c}, pid)) {
-                std::cout << "Tuile de départ placée.\n";
-                break;
-            } else {
-                std::cout << "Position invalide ou conflit. Réessaye.\n";
-            }
+            Tuile td({{0,0}});
+            if (plateau.placerTuile(td, {l,c}, pid)) break;
+            std::cout << "position invalide\n";
         }
     }
 
-    std::cout << "\nDébut de la partie : " << toursParJoueur << " tours par joueur.\n";
-
     for (int tour = 0; tour < toursParJoueur; ++tour) {
-        for (int pid = 1; pid <= nbJoueurs; ++pid) {
-            Plateau &p = plateau;
-            Joueur &j = joueurs[pid-1];
-            std::cout << "\n--- Tour " << (tour+1) << " / Joueur " << j.getNom() << " (ID " << pid << ") ---\n";
-            p.afficherGrille();
-
-            if (indexPile >= pileTuiles.size()) {
-                std::cout << "Plus de tuiles en pile. Fin anticipée.\n";
+        for (int idx = 0; idx < nbJoueurs; ++idx) {
+            int pid = idx + 1;
+            Joueur &j = joueurs[idx];
+            plateau.afficherGrille();
+            if (pileTuiles.empty()) {
+                std::cout << "pile vide\n";
                 return;
             }
 
-            Tuile tuileCourante = tirerPremiere();
+            Tuile tuileCourante = pileTuiles.front();
+            std::cout << "\nTour " << (tour+1) << " - " << j.getNom() << " (id " << pid << ")\n";
+            std::cout << "Tuile actuelle :\n";
+            tuileCourante.afficherApercu();
 
-            if (j.getCoupons() > 0 && indexPile < pileTuiles.size()) {
-                std::cout << "Tu as " << j.getCoupons() << " coupon(s). Veux-tu choisir parmi les 5 tuiles suivantes ? (o/n) : ";
-                char rep;
-                std::cin >> rep;
-                if (rep == 'o' || rep == 'O') {
-                    size_t start = indexPile;
-                    int maxOpt = 5;
-                    if (start >= pileTuiles.size()) {
-                        std::cout << "Aucune tuile suivante disponible.\n";
-                    } else {
-                        afficherOptionsTuiles(start, maxOpt);
-                        std::cout << "Choisis 1.." << maxOpt << " (0 pour annuler) : ";
-                        int choixRel;
-                        std::cin >> choixRel;
-                        if (choixRel >= 1 && choixRel <= maxOpt) {
-                            if (choixRel - 1 < 0 || start + (choixRel-1) >= pileTuiles.size()) {
-                                std::cout << "Choix invalide.\n";
-                            } else {
-                                if (j.utiliserCoupon()) {
-                                    Tuile selection;
-                                    bool ok = choisirParmiSuivantes(choixRel - 1, selection);
-                                    if (ok) {
-                                        tuileCourante = selection;
-                                        std::cout << "Tu as choisi la tuile #" << (indexPile) << " (détails ci-dessous)\n";
-                                        tuileCourante.afficherApercu();
-                                    } else {
-                                        std::cout << "Erreur lors du choix.\n";
-                                    }
-                                } else {
-                                    std::cout << "Impossible d'utiliser le coupon (erreur).\n";
-                                }
-                            }
-                        }
+            bool actionDone = false;
+
+        while (!actionDone) {
+
+            std::cout << "\n=== " << j.getNom() << " (Joueur " << pid << ") ===\n";
+            std::cout << "Tuile actuelle:\n";
+            tuileCourante.afficherApercu();
+
+            std::cout << "\nCommandes :\n";
+            std::cout << " R = Tourner    | F = Retourner\n";
+            std::cout << " P = Poser      | N = Voir suivantes\n";
+            std::cout << " E = Echanger   | S = Passer\n> ";
+
+            char cmd;
+            std::cin >> cmd;
+            cmd = toupper(cmd);
+
+            if (cmd == 'R') {
+                tuileCourante.rotate();
+            }
+            else if (cmd == 'F') {
+                tuileCourante.flip();
+            }
+            else if (cmd == 'N') {
+                afficherOptionsTuiles(5);
+            }
+            else if (cmd == 'E') {
+                if (j.getCoupons() <= 0) {
+                    std::cout << "Pas de coupon.\n";
+                    continue;
+                }
+                std::cout << "Choisir parmi les 5 suivantes (1-5), 0 annule :\n";
+                afficherOptionsTuiles(5);
+                int choix;
+                std::cin >> choix;
+                if (choix >= 1 && choix <= 5) {
+                    if (choisirParmiSuivantes(choix-1, tuileCourante)) {
+                        j.utiliserCoupon();
                     }
                 }
             }
+            else if (cmd == 'P') {
+                std::string s;
+                std::cout << "Case (ex: K10, X annule) : ";
+                std::cin >> s;
 
-            std::cout << "Voulez-vous pivoter la tuile ? (nombre de rotations 90° cw, 0 = non) : ";
-            int nbRot = 0; std::cin >> nbRot;
-            for (int r = 0; r < nbRot; ++r) tuileCourante.rotate();
+                if (s == "X" || s == "x") continue;
 
-            std::cout << "Voulez-vous retourner la tuile horizontalement ? (o/n) : ";
-            char rf; std::cin >> rf;
-            if (rf == 'o' || rf == 'O') tuileCourante.flip();
+                Coordonnee pos = plateau.convertirCase(s);
 
-            std::cout << "Aperçu de la tuile que tu vas poser :\n";
-            tuileCourante.afficherApercu();
-
-            int l, c;
-            std::cout << "Entrez la ligne et la colonne pour placer la tuile (ex: 5 5) ou -1 -1 pour défausser : ";
-            std::cin >> l >> c;
-            if (l == -1 && c == -1) {
-                std::cout << "Tuile défaussée.\n";
-            } else {
-                bool placed = plateau.placerTuile(tuileCourante, {l, c}, pid);
-                if (placed) {
-                    std::cout << "Tuile placée avec succès.\n";
+                if (plateau.placerTuile(tuileCourante, pos, pid)) {
+                    pileTuiles.pop_front();
+                    plateau.appliquerBonusesAprèsPlacement(pid, joueurs);
+                    std::cout << "Placée.\n";
+                    actionDone = true;
                 } else {
-                    std::cout << "Placement invalide -> tuile défaussée.\n";
+                    std::cout << "Placement invalide.\n";
                 }
             }
-
-            std::cout << "Fin du tour de " << j.getNom() << ".\n";
+            else if (cmd == 'S') {
+                std::cout << "Passe.\n";
+                actionDone = true;
+            }
+            else {
+                std::cout << "Commande inconnue.\n";
+            }
         }
     }
-
-    std::cout << "\n=== Fin des tours ===\n";
-    plateau.afficherGrille();
-
-    std::cout << "Note : le calcul final du plus grand carré n'est pas encore implémenté.\n";
 }
+
+    plateau.afficherGrille();
+    std::cout << "\nFin des tours. Calcul des scores...\n";
+
+    int nb = (int)joueurs.size();
+    std::vector<int> bestSquares(nb+1,0);
+    std::vector<int> totalCases(nb+1,0);
+    for (int i=1;i<=nb;++i) {
+        bestSquares[i] = plateau.plusGrandCarrePour(i);
+        totalCases[i] = plateau.nombreCasesPour(i);
+        std::cout << "Joueur " << joueurs[i-1].getNom() << " : plus grand carré = " << bestSquares[i]
+                  << " (" << (bestSquares[i]*bestSquares[i]) << " cases), total cases = " << totalCases[i] << "\n";
+    }
+
+    int winner = 1;
+    for (int i=2;i<=nb;++i) {
+        if (bestSquares[i] > bestSquares[winner]) winner = i;
+        else if (bestSquares[i] == bestSquares[winner] && totalCases[i] > totalCases[winner]) winner = i;
+    }
+
+    std::cout << "Vainqueur : " << joueurs[winner-1].getNom() << "\n";
+}
+
