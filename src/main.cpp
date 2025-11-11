@@ -3,7 +3,7 @@
 
 int main() {
     std::vector<std::string> noms = {"Arthur", "Lucas"};
-    Jeu jeu(noms, 5); // 5 tours automatiques par joueur (modifiable)
+    Jeu jeu(noms, 5);
 
     Plateau &plateau = jeu.getPlateau();
     auto &pile = jeu.getPile();
@@ -11,11 +11,9 @@ int main() {
 
     std::cout << "\n=== TEST AUTOMATIQUE DEMARRE ===\n";
 
-    // --- Placement initial (central) ---
     plateau.placerTuile(Tuile({{0,0}}), {10,10}, 1);
     plateau.placerTuile(Tuile({{0,0}}), {10,12}, 2);
 
-    // --- Simulation des tours ---
     for (int tour = 1; tour <= jeu.getNbTours(); ++tour) {
         std::cout << "\n--- TOUR " << tour << " ---\n";
 
@@ -25,12 +23,9 @@ int main() {
 
             Tuile t = pile.front();
             pile.pop_front();
-
-            // Test rotation et flip
             if (tour % 2 == 0) t.rotate();
             if (tour % 3 == 0) t.flip();
 
-            // Essai placements autour du territoire du joueur
             bool placed = false;
             for (int r = 8; r < 13 && !placed; r++) {
                 for (int c = 8; c < 15 && !placed; c++) {
@@ -42,7 +37,6 @@ int main() {
                 }
             }
 
-            // Si aucun placement possible → passe le tour
             if (!placed) {
                 std::cout << j.getNom() << " ne peut pas jouer → tuile défaussée.\n";
             }
@@ -51,7 +45,6 @@ int main() {
         plateau.afficherGrille();
     }
 
-    // --- Fin de Partie / Calcul Score ---
     std::cout << "\n===== FIN DU TEST AUTOMATIQUE =====\n";
     plateau.afficherGrille();
     std::cout << "\nCalcul des scores...\n";
@@ -75,7 +68,7 @@ int main() {
             winner = i;
     }
 
-    std::cout << "\n🏆 Vainqueur automatique : " << joueurs[winner-1].getNom() << " !\n";
+    std::cout << "\nVainqueur automatique : " << joueurs[winner-1].getNom() << " !\n";
 
     return 0;
 }
