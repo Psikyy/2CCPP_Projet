@@ -32,5 +32,8 @@ public:
     int plusGrandCarrePour(int idJoueur) const;
     int nombreCasesPour(int idJoueur) const;
     Coordonnee convertirCase(const std::string& input) const;
+    void activerBonus(int r, int c, int idJoueur, std::vector<Joueur>& joueurs);
+    bool retirerPierre(int r, int c); 
+    Tuile choisirTuileAvecCoupon(int idJoueur, std::queue<Tuile>& pioche);
 };
 #endif

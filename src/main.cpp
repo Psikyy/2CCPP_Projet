@@ -1,5 +1,10 @@
 #include "../include/Jeu.hpp"
 #include <iostream>
+#include "../include/Joueur.hpp" 
+#include "../include/Tuile.hpp"    
+#include <iostream>
+#include <vector>
+#include <deque>             
 
 int main() {
     std::vector<std::string> noms = {"Arthur", "Lucas"};

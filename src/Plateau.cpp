@@ -3,6 +3,10 @@
 #include <queue>
 #include <cmath>
 #include <algorithm>
+#include <iostream>
+#include <string>
+#include <cctype>
+
 
 Plateau::Plateau(int nombreJoueurs, const std::vector<std::string>&)
     : nbJoueurs(nombreJoueurs)
@@ -124,6 +128,90 @@ bool Plateau::estCaseBonusValide(int r, int c) const {
     return true;
 }
 
+void Plateau::utiliserCoupon(int idJoueur, std::queue<Tuile>& pioche) {
+    Joueur& j = joueurs[idJoueur-1]; 
+    if (j.getCoupons() <= 0) {
+        std::cout << "Pas de coupon disponible.\n";
+        return;
+    }
+
+    std::cout << "Vous pouvez utiliser un coupon d'échange !\n";
+    std::cout << "1: Retirer une pierre (P)\n";
+    std::cout << "2: Choisir une tuile parmi les 5 prochaines\n";
+    int choix;
+    while (true) {
+        std::cout << "Entrez votre choix (1 ou 2) : ";
+        std::cin >> choix;
+        if (std::cin.fail() || (choix != 1 && choix != 2)) {
+            std::cin.clear();
+            std::cin.ignore(10000, '\n');
+            std::cout << "Choix invalide. Réessayez.\n";
+        } else break;
+    }
+
+    if (choix == 1) {
+        int r, c;
+        while (true) {
+            std::cout << "Entrez la ligne et la colonne de la pierre à retirer (ex: 3 5) : ";
+            std::cin >> r >> c;
+            if (std::cin.fail() || !retirerPierre(r,c)) {
+                std::cin.clear();
+                std::cin.ignore(10000,'\n');
+                std::cout << "Position invalide ou pas une pierre.\n";
+            } else break;
+        }
+    } else if (choix == 2) {
+        Tuile tuileChoisie = choisirTuileAvecCoupon(idJoueur, pioche);
+        std::cout << "Vous avez choisi la tuile :\n";
+        tuileChoisie.afficherApercu();
+    }
+
+    j.utiliserCoupon(); 
+}
+
+bool Plateau::retirerPierre(int r, int c) {
+    if (!estPositionValide({r,c})) return false;
+    if (grille[r][c] != 'P') return false;
+
+    grille[r][c] = '.';
+    std::cout << "Pierre retirée en (" << r << "," << c << ")\n";
+    return true;
+}
+
+Tuile Plateau::choisirTuileAvecCoupon(int idJoueur, std::queue<Tuile>& pioche) {
+    std::vector<Tuile> prochaines;
+    int maxTuiles = 5;
+
+    for (int i = 0; i < maxTuiles && !pioche.empty(); ++i) {
+        prochaines.push_back(pioche.front());
+        pioche.pop();
+    }
+    std::cout << "Joueur " << idJoueur << ", vous pouvez choisir une tuile parmi les " << prochaines.size() << " prochaines :\n";
+    for (int i = 0; i < prochaines.size(); ++i) {
+        std::cout << i+1 << ": ";
+        prochaines[i].afficherApercu();
+        std::cout << "\n";
+    }
+    int choix = 0;
+    while (true) {
+        std::cout << "Entrez le numéro de la tuile à choisir (1-" << prochaines.size() << "): ";
+        std::cin >> choix;
+        if (std::cin.fail() || choix < 1 || choix > prochaines.size()) {
+            std::cin.clear();
+            std::cin.ignore(10000, '\n');
+            std::cout << "Choix invalide. Réessayez.\n";
+        } else break;
+    }
+
+    Tuile tuileChoisie = prochaines[choix - 1];
+    for (int i = 0; i < prochaines.size(); ++i) {
+        if (i != choix - 1) pioche.push(prochaines[i]);
+    }
+
+    return tuileChoisie;
+}
+
+
 void Plateau::initialiserBonusesFixes() {
     int nbEchange = (int)std::ceil(1.5 * nbJoueurs);
     int nbPierre = (int)std::ceil(0.5 * nbJoueurs);
@@ -151,55 +239,72 @@ void Plateau::initialiserBonusesFixes() {
         }
     }
 }
+void Plateau::activerBonus(int r, int c, int idJoueur, std::vector<Joueur>& joueurs) {
+    char type = bonus[r][c];
+    Joueur &j = joueurs[idJoueur-1];
+
+    if (type == '.') return;
+
+    if (type == 'E') {
+        j.ajouterCoupon();
+        std::cout << "Joueur " << j.getNom() << " reçoit un coupon d'échange !\n";
+    } 
+    else if (type == 'P') {
+        grille[r][c] = 'P';
+        std::cout << "Joueur " << j.getNom() << " place une tuile PIERRE !\n";
+    } 
+    else if (type == 'V') {
+        for (int i = 0; i < nbJoueurs; ++i) {
+            if (i == idJoueur-1) continue;
+            char symOther = '0' + (i+1);
+            bool trouve = false;
+            for (int x=0;x<tailleGrille && !trouve;++x) {
+                for (int y=0;y<tailleGrille;++y) {
+                    if (grille[x][y] == symOther) {
+                        grille[x][y] = '0' + idJoueur;
+                        std::cout << "Joueur " << j.getNom() << " vole une tuile à " 
+                                  << joueurs[i].getNom() << " !\n";
+                        trouve = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
 
 void Plateau::appliquerBonusesAprèsPlacement(int idJoueur, std::vector<Joueur>& joueurs) {
     char sym = '0' + idJoueur;
-    for (int r=1;r<tailleGrille-1;++r) {
-        for (int c=1;c<tailleGrille-1;++c) {
-            if (bonus[r][c]=='.') continue;
+
+    for (int r = 1; r < tailleGrille-1; ++r) {
+        for (int c = 1; c < tailleGrille-1; ++c) {
+            char type = bonus[r][c];
+
+            if (type == '.' || grille[r][c] != '.') 
+                continue; 
             const int dx[4] = {1,-1,0,0};
             const int dy[4] = {0,0,1,-1};
-            bool entouré=false;
-            entouré = true;
+            bool entoure = true;
             for (int k=0;k<4;++k) {
-                int nx=r+dx[k], ny=c+dy[k];
-                if (nx<0 || ny<0 || nx>=tailleGrille || ny>=tailleGrille) { entouré=false; break; }
-                if (grille[nx][ny] != sym) { entouré=false; break; }
+                int nx = r+dx[k], ny = c+dy[k];
+                if (grille[nx][ny] != sym) { entoure = false; break; }
             }
-            if (!entouré) continue;
-            char type = bonus[r][c];
-            bonus[r][c] = '.';
-            grille[r][c] = sym;
+            if (!entoure) continue; 
+
             Joueur &j = joueurs[idJoueur-1];
+
             if (type == 'E') {
                 j.ajouterCoupon();
-            } else if (type == 'P') {
-                std::cout << "Joueur " << j.getNom() << " a gagné une case pierre. Choisis où la poser (ligne col) : ";
-                int lr, lc;
-                while (true) {
-                    if (!(std::cin >> lr >> lc)) { std::cin.clear(); std::cin.ignore(10000,'\n'); continue; }
-                    if (lr<0 || lc<0 || lr>=tailleGrille || lc>=tailleGrille) { std::cout << "Invalide\n"; continue; }
-                    if (grille[lr][lc] != '.' || bonus[lr][lc] != '.') { std::cout << "Occupé\n"; continue; }
-                    bonus[lr][lc] = 'X';
-                    break;
-                }
-            } else if (type == 'V') {
-                std::cout << "Joueur " << j.getNom() << " a gagné un bonus VOL. Choisis un joueur cible (id): ";
-                int cibleId;
-                std::cin >> cibleId;
-                if (cibleId >= 1 && cibleId <= nbJoueurs && cibleId != idJoueur) {
-                    std::cout << "Donne coordonées d'une case du joueur cible à voler (ligne col): ";
-                    int lr, lc;
-                    if (std::cin >> lr >> lc) {
-                        if (lr>=0 && lc>=0 && lr<tailleGrille && lc<tailleGrille && grille[lr][lc] == char('0'+cibleId)) {
-                            grille[lr][lc] = sym;
-                        } else {
-                            std::cout << "Coordonnées invalides ou case non du joueur cible\n";
-                        }
-                    }
-                } else {
-                    std::cout << "Cible invalide\n";
-                }
+                bonus[r][c] = '.'; 
+                std::cout << "Joueur " << j.getNom() << " reçoit un coupon d'échange !\n";
+            }
+            else if (type == 'P') {
+                activerBonus(r, c, idJoueur, joueurs);
+                bonus[r][c] = '.';
+            }
+            else if (type == 'V') {
+                activerBonus(r, c, idJoueur, joueurs);
+                bonus[r][c] = '.';
             }
         }
     }

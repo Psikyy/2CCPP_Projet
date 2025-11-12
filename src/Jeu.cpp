@@ -4,6 +4,8 @@
 #include <random>
 #include <iostream>
 #include <limits>
+#include <deque>     
+#include <cctype>
 
 Jeu::Jeu(const std::vector<std::string>& noms, int tours)
     : plateau((int)noms.size(), noms), toursParJoueur(tours)
@@ -93,9 +95,9 @@ void Jeu::bouclePrincipale() {
             tuileCourante.afficherApercu();
 
             std::cout << "\nCommandes :\n";
-            std::cout << " R = Tourner    | F = Retourner\n";
-            std::cout << " P = Poser      | N = Voir suivantes\n";
-            std::cout << " E = Echanger   | S = Passer\n> ";
+            std::cout << " R = Tourner               | F = Retourner\n";
+            std::cout << " P = Poser                 | N = Voir suivantes\n";
+            std::cout << " E = Utiliser un coupon   | S = Passer\n> ";
 
             char cmd;
             std::cin >> cmd;
@@ -115,15 +117,7 @@ void Jeu::bouclePrincipale() {
                     std::cout << "Pas de coupon.\n";
                     continue;
                 }
-                std::cout << "Choisir parmi les 5 suivantes (1-5), 0 annule :\n";
-                afficherOptionsTuiles(5);
-                int choix;
-                std::cin >> choix;
-                if (choix >= 1 && choix <= 5) {
-                    if (choisirParmiSuivantes(choix-1, tuileCourante)) {
-                        j.utiliserCoupon();
-                    }
-                }
+                plateau.utiliserCoupon(pid, pileTuiles);
             }
             else if (cmd == 'P') {
                 std::string s;

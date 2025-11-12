@@ -1,5 +1,4 @@
 #include "../include/tuilesDef.hpp"
-#include <iostream>
 #include "../include/Tuile.hpp"
 
 std::vector<Tuile> chargerTuiles() {
