@@ -117,7 +117,7 @@ void Jeu::bouclePrincipale() {
                     std::cout << "Pas de coupon.\n";
                     continue;
                 }
-                plateau.utiliserCoupon(pid, pileTuiles);
+                plateau.utiliserCoupon(pid, pileTuiles, joueurs);
             }
             else if (cmd == 'P') {
                 std::string s;

@@ -128,7 +128,7 @@ bool Plateau::estCaseBonusValide(int r, int c) const {
     return true;
 }
 
-void Plateau::utiliserCoupon(int idJoueur, std::queue<Tuile>& pioche) {
+void Plateau::utiliserCoupon(int idJoueur, std::deque<Tuile>& pioche, std::vector<Joueur>& joueurs) {
     Joueur& j = joueurs[idJoueur-1]; 
     if (j.getCoupons() <= 0) {
         std::cout << "Pas de coupon disponible.\n";
@@ -178,13 +178,13 @@ bool Plateau::retirerPierre(int r, int c) {
     return true;
 }
 
-Tuile Plateau::choisirTuileAvecCoupon(int idJoueur, std::queue<Tuile>& pioche) {
+Tuile Plateau::choisirTuileAvecCoupon(int idJoueur, std::deque<Tuile>& pioche) {
     std::vector<Tuile> prochaines;
     int maxTuiles = 5;
 
     for (int i = 0; i < maxTuiles && !pioche.empty(); ++i) {
         prochaines.push_back(pioche.front());
-        pioche.pop();
+        pioche.pop_front();
     }
     std::cout << "Joueur " << idJoueur << ", vous pouvez choisir une tuile parmi les " << prochaines.size() << " prochaines :\n";
     for (int i = 0; i < prochaines.size(); ++i) {
@@ -205,7 +205,7 @@ Tuile Plateau::choisirTuileAvecCoupon(int idJoueur, std::queue<Tuile>& pioche) {
 
     Tuile tuileChoisie = prochaines[choix - 1];
     for (int i = 0; i < prochaines.size(); ++i) {
-        if (i != choix - 1) pioche.push(prochaines[i]);
+        if (i != choix - 1) pioche.push_back(prochaines[i]);
     }
 
     return tuileChoisie;

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <queue>
 #include "Common.hpp"
 #include "Tuile.hpp"
 
@@ -34,6 +35,8 @@ public:
     Coordonnee convertirCase(const std::string& input) const;
     void activerBonus(int r, int c, int idJoueur, std::vector<Joueur>& joueurs);
     bool retirerPierre(int r, int c); 
-    Tuile choisirTuileAvecCoupon(int idJoueur, std::queue<Tuile>& pioche);
+    void utiliserCoupon(int idJoueur, std::deque<Tuile>& pioche, std::vector<Joueur>& joueurs);
+    Tuile choisirTuileAvecCoupon(int idJoueur, std::deque<Tuile>& pioche);
+
 };
 #endif

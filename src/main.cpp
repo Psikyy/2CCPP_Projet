@@ -1,79 +1,101 @@
 #include "../include/Jeu.hpp"
 #include <iostream>
-#include "../include/Joueur.hpp" 
-#include "../include/Tuile.hpp"    
-#include <iostream>
 #include <vector>
-#include <deque>             
+#include <random>
+#include <thread>
+#include <chrono>
 
 int main() {
+    std::cout << "=====================================\n";
+    std::cout << "   🤖 LAYING GRASS - AUTO DEMO 🌿    \n";
+    std::cout << "=====================================\n\n";
+
     std::vector<std::string> noms = {"Arthur", "Lucas"};
-    Jeu jeu(noms, 5);
+    Jeu jeu(noms, 9);
 
-    Plateau &plateau = jeu.getPlateau();
-    auto &pile = jeu.getPile();
-    auto &joueurs = jeu.getJoueurs();
+    auto& plateau = jeu.getPlateau();
+    auto& joueurs = jeu.getJoueurs();
 
-    std::cout << "\n=== TEST AUTOMATIQUE DEMARRE ===\n";
+    std::cout << "🎮 Simulation automatique avec " << joueurs.size() << " joueurs.\n";
+    std::cout << "Plateau " << plateau.getTailleGrille() << "x" << plateau.getTailleGrille() << "\n\n";
 
-    plateau.placerTuile(Tuile({{0,0}}), {10,10}, 1);
-    plateau.placerTuile(Tuile({{0,0}}), {10,12}, 2);
+    std::vector<Coordonnee> starts = {
+        {plateau.getTailleGrille() / 2, plateau.getTailleGrille() / 3},
+        {plateau.getTailleGrille() / 2, 2 * plateau.getTailleGrille() / 3}
+    };
+
+    for (int i = 0; i < (int)joueurs.size(); ++i) {
+        Tuile t({{0,0}});
+        plateau.placerTuile(t, starts[i], joueurs[i].getId());
+        joueurs[i].setTuileDepart(starts[i]);
+    }
+
+    plateau.afficherGrille();
+    std::cout << "\n🌱 Tuiles de départ placées !\n\n";
+
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> rot(0, 3);
+    std::uniform_int_distribution<int> flip(0, 1);
+    std::uniform_int_distribution<int> pos(0, plateau.getTailleGrille()-1);
+
+    auto& pile = jeu.getPile();
 
     for (int tour = 1; tour <= jeu.getNbTours(); ++tour) {
-        std::cout << "\n--- TOUR " << tour << " ---\n";
-
-        for (int pid = 1; pid <= (int)joueurs.size(); ++pid) {
-            Joueur &j = joueurs[pid-1];
+        std::cout << "\n--- 🌀 TOUR " << tour << " ---\n";
+        for (auto& j : joueurs) {
             if (pile.empty()) break;
-
             Tuile t = pile.front();
             pile.pop_front();
-            if (tour % 2 == 0) t.rotate();
-            if (tour % 3 == 0) t.flip();
 
-            bool placed = false;
-            for (int r = 8; r < 13 && !placed; r++) {
-                for (int c = 8; c < 15 && !placed; c++) {
-                    if (plateau.placerTuile(t, {r,c}, pid)) {
-                        std::cout << j.getNom() << " place une tuile en " 
-                                  << char('A'+c) << (r+1) << "\n";
-                        placed = true;
-                    }
+            for (int r = 0; r < rot(rng); ++r) t.rotate();
+            if (flip(rng)) t.flip();
+
+            bool placé = false;
+            for (int tries = 0; tries < 50 && !placé; ++tries) {
+                int r = pos(rng);
+                int c = pos(rng);
+                Coordonnee p{r,c};
+                if (plateau.placerTuile(t, p, j.getId())) {
+                    std::cout << j.getNom() << " place une tuile en "
+                              << char('A'+c) << (r+1) << "\n";
+                    plateau.appliquerBonusesAprèsPlacement(j.getId(), joueurs);
+                    placé = true;
                 }
             }
 
-            if (!placed) {
+            if (!placé)
                 std::cout << j.getNom() << " ne peut pas jouer → tuile défaussée.\n";
-            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(400));
         }
 
         plateau.afficherGrille();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
-    std::cout << "\n===== FIN DU TEST AUTOMATIQUE =====\n";
+    std::cout << "\n===== 🏁 FIN DE LA PARTIE =====\n";
     plateau.afficherGrille();
+
     std::cout << "\nCalcul des scores...\n";
+    int bestId = 1;
+    int bestCarre = 0, bestCases = 0;
 
-    int nb = joueurs.size();
-    std::vector<int> bestSquares(nb+1), totalCases(nb+1);
+    for (auto& j : joueurs) {
+        int c = plateau.plusGrandCarrePour(j.getId());
+        int n = plateau.nombreCasesPour(j.getId());
+        std::cout << j.getNom() << " : carré = " << c << " (" << c*c
+                  << " cases), total = " << n << "\n";
 
-    for (int i = 1; i <= nb; i++) {
-        bestSquares[i] = plateau.plusGrandCarrePour(i);
-        totalCases[i] = plateau.nombreCasesPour(i);
-        std::cout << joueurs[i-1].getNom()
-                  << ": plus grand carre = " << bestSquares[i]
-                  << " => " << (bestSquares[i] * bestSquares[i]) << " cases, total = "
-                  << totalCases[i] << "\n";
+        if (c > bestCarre || (c == bestCarre && n > bestCases)) {
+            bestCarre = c;
+            bestCases = n;
+            bestId = j.getId();
+        }
     }
 
-    int winner = 1;
-    for (int i = 2; i <= nb; i++) {
-        if (bestSquares[i] > bestSquares[winner]) winner = i;
-        else if (bestSquares[i] == bestSquares[winner] && totalCases[i] > totalCases[winner])
-            winner = i;
-    }
+    std::cout << "\n🏆 Vainqueur automatique : " << joueurs[bestId-1].getNom()
+              << " !\n";
 
-    std::cout << "\nVainqueur automatique : " << joueurs[winner-1].getNom() << " !\n";
-
+    std::cout << "\n🌿 Démo terminée. Merci d’avoir regardé ! 🌿\n";
     return 0;
 }
