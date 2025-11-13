@@ -2,6 +2,7 @@
 #include "../include/Joueur.hpp"
 #include <queue>
 #include <cmath>
+#include <random>
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -213,64 +214,41 @@ Tuile Plateau::choisirTuileAvecCoupon(int idJoueur, std::deque<Tuile>& pioche) {
 
 
 void Plateau::initialiserBonusesFixes() {
-    int nbEchange = (int)std::ceil(1.5 * nbJoueurs);
-    int nbPierre = (int)std::ceil(0.5 * nbJoueurs);
-    int nbVol = nbJoueurs;
-    int placedE=0, placedP=0, placedV=0;
-    int step = std::max(2, tailleGrille/6);
-    for (int r = step; r < tailleGrille-step && (placedE<nbEchange || placedP<nbPierre || placedV<nbVol); r += step) {
-        for (int c = step; c < tailleGrille-step && (placedE<nbEchange || placedP<nbPierre || placedV<nbVol); c += step) {
-            if (!estCaseBonusValide(r,c)) continue;
-            if (placedE < nbEchange) { bonus[r][c] = 'E'; ++placedE; continue; }
-        }
-    }
-    for (int r = step/2; r < tailleGrille-step/2 && (placedP<nbPierre || placedV<nbVol); r += step) {
-        for (int c = step/2; c < tailleGrille-step/2 && (placedP<nbPierre || placedV<nbVol); c += step) {
-            if (!estCaseBonusValide(r,c)) continue;
-            if (placedP < nbPierre) { bonus[r][c] = 'P'; ++placedP; continue; }
-        }
-    }
-    for (int r = step; r < tailleGrille-step && placedV<nbVol; r += step) {
-        for (int c = step/3; c < tailleGrille-step/3 && placedV<nbVol; c += step) {
-            if (!estCaseBonusValide(r,c)) continue;
+    int nbEchange = static_cast<int>(std::ceil(1.5 * nbJoueurs));
+    int nbPierre  = static_cast<int>(std::ceil(0.5 * nbJoueurs));
+    int nbVol     = nbJoueurs;
+
+    int total = nbEchange + nbPierre + nbVol;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(1, tailleGrille - 2);
+
+    int placedE = 0, placedP = 0, placedV = 0;
+
+    while (placedE + placedP + placedV < total) {
+        int r = dist(gen);
+        int c = dist(gen);
+
+        if (!estCaseBonusValide(r, c)) continue;
+
+        int choixType = dist(gen) % 3;
+        if (choixType == 0 && placedE < nbEchange) {
+            bonus[r][c] = 'E';
+            ++placedE;
+        } else if (choixType == 1 && placedP < nbPierre) {
+            bonus[r][c] = 'P';
+            ++placedP;
+        } else if (choixType == 2 && placedV < nbVol) {
             bonus[r][c] = 'V';
             ++placedV;
-            if (placedV>=nbVol) break;
         }
     }
-}
-void Plateau::activerBonus(int r, int c, int idJoueur, std::vector<Joueur>& joueurs) {
-    char type = bonus[r][c];
-    Joueur &j = joueurs[idJoueur-1];
 
-    if (type == '.') return;
-
-    if (type == 'E') {
-        j.ajouterCoupon();
-        std::cout << "Joueur " << j.getNom() << " reçoit un coupon d'échange !\n";
-    } 
-    else if (type == 'P') {
-        grille[r][c] = 'P';
-        std::cout << "Joueur " << j.getNom() << " place une tuile PIERRE !\n";
-    } 
-    else if (type == 'V') {
-        for (int i = 0; i < nbJoueurs; ++i) {
-            if (i == idJoueur-1) continue;
-            char symOther = '0' + (i+1);
-            bool trouve = false;
-            for (int x=0;x<tailleGrille && !trouve;++x) {
-                for (int y=0;y<tailleGrille;++y) {
-                    if (grille[x][y] == symOther) {
-                        grille[x][y] = '0' + idJoueur;
-                        std::cout << "Joueur " << j.getNom() << " vole une tuile à " 
-                                  << joueurs[i].getNom() << " !\n";
-                        trouve = true;
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    std::cout << "[DEBUG] Bonus placés aléatoirement : "
+              << placedE << " E, "
+              << placedP << " P, "
+              << placedV << " V.\n";
 }
 
 void Plateau::appliquerBonusesAprèsPlacement(int idJoueur, std::vector<Joueur>& joueurs) {
@@ -309,6 +287,41 @@ void Plateau::appliquerBonusesAprèsPlacement(int idJoueur, std::vector<Joueur>&
         }
     }
 }
+
+void Plateau::activerBonus(int r, int c, int idJoueur, std::vector<Joueur>& joueurs) {
+    char type = bonus[r][c];
+    Joueur &j = joueurs[idJoueur-1];
+
+    if (type == '.') return;
+
+    if (type == 'E') {
+        j.ajouterCoupon();
+        std::cout << "Joueur " << j.getNom() << " reçoit un coupon d'échange !\n";
+    } 
+    else if (type == 'P') {
+        grille[r][c] = 'P';
+        std::cout << "Joueur " << j.getNom() << " place une tuile PIERRE !\n";
+    } 
+    else if (type == 'V') {
+        for (int i = 0; i < nbJoueurs; ++i) {
+            if (i == idJoueur-1) continue;
+            char symOther = '0' + (i+1);
+            bool trouve = false;
+            for (int x=0;x<tailleGrille && !trouve;++x) {
+                for (int y=0;y<tailleGrille;++y) {
+                    if (grille[x][y] == symOther) {
+                        grille[x][y] = '0' + idJoueur;
+                        std::cout << "Joueur " << j.getNom() << " vole une tuile à " 
+                                  << joueurs[i].getNom() << " !\n";
+                        trouve = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 int Plateau::plusGrandCarrePour(int idJoueur) const {
     char sym = '0' + idJoueur;

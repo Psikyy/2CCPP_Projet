@@ -10,7 +10,7 @@ void testTuileRotationFlip() {
     cout << "Original:\n"; t.afficherApercu();
     t.rotate(); cout << "Après rotation:\n"; t.afficherApercu();
     t.flip(); cout << "Après flip:\n"; t.afficherApercu();
-    cout << "✅ Rotation & Flip test OK\n";
+    cout << "Rotation & Flip test OK\n";
 }
 
 void testPlacementBasique() {
@@ -25,7 +25,7 @@ void testPlacementBasique() {
     assert(!fail);
     cout << "Placement collision refusé (ok).\n";
     plateau.afficherGrille();
-    cout << "✅ Placement test OK\n";
+    cout << "Placement test OK\n";
 }
 
 void testAdjacenceEtEmpietement() {
@@ -38,7 +38,7 @@ void testAdjacenceEtEmpietement() {
     assert(!invalide);
     bool valide = plateau.placerTuile(t, {5,6}, 1);
     assert(valide);
-    cout << "✅ Test adjacence / empietement OK\n";
+    cout << "Test adjacence / empietement OK\n";
     plateau.afficherGrille();
 }
 
@@ -58,7 +58,7 @@ void testBonuses() {
     plateau.placerTuile(bloc, {r,c-1}, 1);
     plateau.placerTuile(bloc, {r,c+1}, 1);
     plateau.appliquerBonusesAprèsPlacement(1, joueurs);
-    cout << "✅ Bonus test terminé\n";
+    cout << "Bonus test terminé\n";
 }
 
 void testCalculScore() {
@@ -74,7 +74,7 @@ void testCalculScore() {
     cout << "Carré détecté = " << carre << " (attendu 2)\n";
     cout << "Total cases = " << total << " (attendu 4)\n";
     assert(carre == 2 && total == 4);
-    cout << "✅ Score test OK\n";
+    cout << "Score test OK\n";
 }
 
 void testMiniPartie() {
@@ -102,7 +102,7 @@ void testMiniPartie() {
     int s2 = plateau.plusGrandCarrePour(2);
     cout << "Arthur carré = " << s1 << " | Lucas carré = " << s2 << "\n";
     cout << ((s1 > s2) ? "Vainqueur: Arthur" : "Vainqueur: Lucas") << endl;
-    cout << "✅ Mini partie OK\n";
+    cout << "Mini partie OK\n";
 }
 
 int main() {
@@ -113,6 +113,6 @@ int main() {
     testBonuses();
     testCalculScore();
     testMiniPartie();
-    cout << "\n✅✅ TOUS LES TESTS TERMINÉS AVEC SUCCÈS ✅✅\n";
+    cout << "\nTOUS LES TESTS TERMINÉS AVEC SUCCÈS \n";
     return 0;
 }

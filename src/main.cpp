@@ -7,7 +7,7 @@
 
 int main() {
     std::cout << "=====================================\n";
-    std::cout << "   🤖 LAYING GRASS - AUTO DEMO 🌿    \n";
+    std::cout << "   LAYING GRASS - AUTO DEMO    \n";
     std::cout << "=====================================\n\n";
 
     std::vector<std::string> noms = {"Arthur", "Lucas"};
@@ -31,7 +31,7 @@ int main() {
     }
 
     plateau.afficherGrille();
-    std::cout << "\n🌱 Tuiles de départ placées !\n\n";
+    std::cout << "\nTuiles de départ placées !\n\n";
 
     std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> rot(0, 3);
@@ -41,7 +41,7 @@ int main() {
     auto& pile = jeu.getPile();
 
     for (int tour = 1; tour <= jeu.getNbTours(); ++tour) {
-        std::cout << "\n--- 🌀 TOUR " << tour << " ---\n";
+        std::cout << "\n--- TOUR " << tour << " ---\n";
         for (auto& j : joueurs) {
             if (pile.empty()) break;
             Tuile t = pile.front();
@@ -73,7 +73,7 @@ int main() {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
-    std::cout << "\n===== 🏁 FIN DE LA PARTIE =====\n";
+    std::cout << "\n===== FIN DE LA PARTIE =====\n";
     plateau.afficherGrille();
 
     std::cout << "\nCalcul des scores...\n";
@@ -93,9 +93,9 @@ int main() {
         }
     }
 
-    std::cout << "\n🏆 Vainqueur automatique : " << joueurs[bestId-1].getNom()
+    std::cout << "\nVainqueur automatique : " << joueurs[bestId-1].getNom()
               << " !\n";
 
-    std::cout << "\n🌿 Démo terminée. Merci d’avoir regardé ! 🌿\n";
+    std::cout << "\nDémo terminée. Merci d’avoir regardé !\n";
     return 0;
 }
